@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="0006a5fd-cdd1-46e4-8fbb-0a56dae619a1" >
+		<http:request-connection protocol="HTTPS" port="8081" host="localhost">
+			<tls:context >
+				<tls:trust-store path="client-truststore.jks" password="mulesoft" type="jks" insecure="true" />
+			</tls:context>
+			<http:authentication >
+				<http:basic-authentication username="476ac5fae31947cebd15fb79dbae42b3" password="504Ff9d953Fa4Ac6b5Ad7B86c9B4db19" />
+			</http:authentication>
+		</http:request-connection>
+	</http:request-config>
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="24a26ef9-62d9-471b-bc05-47866b9767d4" >
+		<http:listener-connection host="0.0.0.0" port="8082" />
+	</http:listener-config>
+	<flow name="assignment-2-prcFlow" doc:id="32e581b1-11bd-49fa-8e79-374357019a7f" >
+		<http:listener doc:name="Listener" doc:id="60421657-3807-4304-b385-4af88adadbaf" config-ref="HTTP_Listener_config" path="/prc"/>
+		<http:request method="GET" doc:name="Request" doc:id="96ee59ee-fbec-4beb-817c-006aaef72efc" config-ref="HTTP_Request_configuration" path="/er" responseTimeout="1800000">
+			<http:query-params ><![CDATA[#[{
+	userid1: attributes.queryParams.userid1,
+	userid2: attributes.queryParams.userid2,
+	userid3: attributes.queryParams.userid3
+}]]]></http:query-params>
+		</http:request>
+	</flow>
+	<flow name="assignment-2-prcFlow1" doc:id="ee366e6f-53cc-49a3-a1af-beb2b6a245a9" >
+		<ee:transform doc:name="Transform Message" doc:id="69f4e1ab-923f-4141-a378-e5d81b2c52bb" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var a=[{
+	"name": "lakshman",
+	"id": "1",
+	"company": "TC"
+},
+{
+	"name": "mule",
+	"id": "2",
+	"company": "Salesforce"
+},
+{
+	"name": "soft",
+	"id": "3",
+	"company": "IBM"
+}
+]
+---
+(a map{
+	"cand":$.name,
+	"roll": $.id,
+	"org": $.company,
+	"index": $$
+
+})]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="59656bc1-c643-45eb-a0d3-a86afb9a6ec3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var a =[{
+	"name": "lakshman",
+	"id": "1",
+	"org": "mulesoft"
+}]
+---
+(a reduce($)) mapObject(v,k,i) ->{
+	"values": v
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
